@@ -73,7 +73,7 @@ class ConsoleFactory(Factory):
                 DataProxy.ShowRecords(self.transport)
                 
             elif line[0] == '6':
-                if not self.factory.proxy: self.transport.write("proxy not exists, cant replay")
+                if not self.factory.proxy: self.transport.write("proxy not exists, cant replay\n")
                 else:
                     filenames = line.split(" ")[1:]
                     if not filenames: self.transport.write("invalid command\n")
