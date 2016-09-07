@@ -12,7 +12,7 @@ class ConsoleFactory(Factory):
     class MyProtocol(LineReceiver):
         Commands = """
         welcome to use recorder:
-        1.start proxy
+        1.start proxy. proxyPort serverIP serverPort
         2.stop proxy
         3.start record
         4.stop record
