@@ -14,16 +14,28 @@ class ToServerProtocol(Protocol):
     def __init__(self, fromClient):
         self.fromClient =  fromClient
         self.fromClient.toServer = self
+        self.dataQueue = ''
         logging.info("toServer connected")
 
     def getId(self): return self.transport.getPeer()
     
     def dataReceived(self, data):
-        if not self.fromClient:
-            logging.error("%s fromClient not found, drop s2c %.3f KB" % (self.getId(), len(data)/1024.0))
+        def func():
+            if not self.fromClient:
+                logging.error("%s fromClient not found, drop s2c %.3f KB" % (self.getId(), len(data)/1024.0))
+            else:
+                tdata = self.dataQueue
+                self.dataQueue = ''
+                self.fromClient.transport.write(tdata)
+                logging.info("%s > %s s2c %.3f KB" % (self.getId(), self.fromClient.getId(), len(data)/1024.0))
+        if not self.dataQueue:
+            self.dataQueue += data
+            if CONF.DOUBLE_SIDE:
+                reactor.callLater(CONF.delay[0]+(CONF.delay[1]-CONF.delay[0])*random.random(), func)
+            else:
+                func()
         else:
-            self.fromClient.transport.write(data)
-            logging.info("%s > %s s2c %.3f KB" % (self.getId(), self.fromClient.getId(), len(data)/1024.0))
+            self.dataQueue += data
 
     def connectionLost(self, reason):
         logging.info("%s toServer closed", self.getId())
@@ -75,6 +87,7 @@ if __name__ == "__main__":
     parser.add_argument('-H', dest='host', type=str, required=True, help='服务器IP')
     parser.add_argument('-P', dest='port', type=int, required=True, help='服务器PORT')
     parser.add_argument('-D', dest='delay', action='append', type=float, required=True, help='延迟时间sec,range[min,max]')
+    parser.add_argument('--double-side', dest='DOUBLE_SIDE', action='store_true', default=False, help='下行也做延迟')
 
     CONF = parser.parse_args()
 
